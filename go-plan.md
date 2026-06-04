@@ -67,17 +67,17 @@ Use the **Tour of Go** as a lookup, not a course. Write small throwaway snippets
 - **Done:** you can read idiomatic Go and explain why there's no `try/catch` or `implements`.
 
 ## Day 3 — Wed Jun 3: Project structure + the composition root (the Spring-replacement day)
-- [ ] **Lay out the directories.** How: `cmd/api/main.go` (entrypoint); `internal/` for private packages organized **by domain** — `internal/user`, `internal/auth`, `internal/store` (DB), `internal/httpapi` (handlers). `internal/` is compiler-enforced private. Domain packages beat `controllers/services/repos` because the compiler forbids circular imports, which keeps boundaries honest.
-- [ ] **Define the seams (ports & adapters).** How: domain code depends on interfaces (`UserRepo`, `TokenVerifier`), not on `pgx` or `oauth2` directly. Those are adapters at the edges.
-- [ ] **Write the composition root.** How: in `main()`, build in order — config → db pool → repositories → services → handlers → server — passing each into the next constructor: `svc := user.NewService(repo, logger)`. *This is your DI.* If something isn't wired, it won't compile.
-- [ ] **Typed config from env.** How: a `Config` struct with `env:"DB_URL"` tags via `caarlos0/env`; load and validate at startup; fail fast with a clear message if a required var is missing.
+- [x] **Lay out the directories.** How: `cmd/api/main.go` (entrypoint); `internal/` for private packages organized **by domain** — `internal/user`, `internal/auth`, `internal/store` (DB), `internal/httpapi` (handlers). `internal/` is compiler-enforced private. Domain packages beat `controllers/services/repos` because the compiler forbids circular imports, which keeps boundaries honest.
+- [x] **Define the seams (ports & adapters).** How: domain code depends on interfaces (`UserRepo`, `TokenVerifier`), not on `pgx` or `oauth2` directly. Those are adapters at the edges.
+- [x] **Write the composition root.** How: in `main()`, build in order — config → db pool → repositories → services → handlers → server — passing each into the next constructor: `svc := user.NewService(repo, logger)`. *This is your DI.* If something isn't wired, it won't compile.
+- [x] **Typed config from env.** How: a `Config` struct with `env:"DB_URL"` tags via `caarlos0/env`; load and validate at startup; fail fast with a clear message if a required var is missing.
 - **Done:** the app boots from `main()` with everything wired by hand; missing config aborts startup loudly.
 
 ## Day 4 — Thu Jun 4: HTTP layer — chi, middleware, graceful shutdownf
-- [ ] **Router.** How: add `chi`; register routes (`r.Get("/healthz", h.Health)`); use route groups for versioning and the auth-protected section.
-- [ ] **JSON + error envelope.** How: write two helpers — `decode(r, &dst)` and `respond(w, status, v)` — and a consistent error shape like `{"error":{"code":"...","message":"..."}}`. Handlers stay thin.
-- [ ] **Middleware chain.** How: middleware is `func(http.Handler) http.Handler`. Add (in order) request ID → `slog` request logging → panic recovery → CORS. Order matters: recovery must wrap the handlers it protects.
-- [ ] **Graceful shutdown.** How: run `srv.ListenAndServe()` in a goroutine; catch SIGINT/SIGTERM; call `srv.Shutdown(ctx)` with a timeout so in-flight requests drain instead of being killed.
+- [x] **Router.** How: add `chi`; register routes (`r.Get("/healthz", h.Health)`); use route groups for versioning and the auth-protected section.
+- [x] **JSON + error envelope.** How: write two helpers — `decode(r, &dst)` and `respond(w, status, v)` — and a consistent error shape like `{"error":{"code":"...","message":"..."}}`. Handlers stay thin.
+- [x] **Middleware chain.** How: middleware is `func(http.Handler) http.Handler`. Add (in order) request ID → `slog` request logging → panic recovery → CORS. Order matters: recovery must wrap the handlers it protects.
+- [x] **Graceful shutdown.** How: run `srv.ListenAndServe()` in a goroutine; catch SIGINT/SIGTERM; call `srv.Shutdown(ctx)` with a timeout so in-flight requests drain instead of being killed.
 - **Done:** `/healthz` + one resource endpoint served through the full middleware chain; Ctrl-C shuts down cleanly.
 
 ## Day 5 — Fri Jun 5: Postgres — pgx + sqlc + migrations (first DB-backed slice)
