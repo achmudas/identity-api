@@ -3,6 +3,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -12,11 +13,17 @@ import (
 
 	"github.com/achmudas/identity-api/internal/config"
 	"github.com/achmudas/identity-api/internal/httpapi"
+	"github.com/achmudas/identity-api/internal/logger"
 	"github.com/achmudas/identity-api/internal/store"
 	"github.com/achmudas/identity-api/internal/user"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
 func main() {
@@ -25,7 +32,18 @@ func main() {
 		log.Fatalf("invalid config: %v", err)
 	}
 
-	var repo user.Repo = store.NewPostgresRepo(cfg.DBUrl)
+	connString := fmt.Sprintf("postgres://%s:%s@%s/postgres?sslmode=disable&search_path=%s", cfg.DBUsername, cfg.DBPassword, cfg.DBUrl, cfg.DBSchema)
+	m, err := migrate.New("file://db/migrations", connString)
+
+	m.Log = &logger.MigrateLogger{}
+	m.Steps(2)
+
+	pool, err := pgxpool.New(context.Background(), connString)
+	if err != nil {
+		log.Fatalf("failed to initialize connection pool %v", err)
+	}
+
+	var repo user.Repo = store.NewPostgresRepo(pool)
 	service := user.NewService(repo)
 
 	handler := httpapi.NewHandler(service)
@@ -41,7 +59,8 @@ func main() {
 	r.Use(middleware.Recoverer)
 
 	r.Get("/healthz", handler.Healthz)
-	r.Get("/user", handler.User)
+	r.Get("/user/{email}", handler.FindUser)
+	r.Post("/user", handler.CreateUser)
 
 	srv := &http.Server{Addr: ":" + cfg.Port, Handler: r}
 

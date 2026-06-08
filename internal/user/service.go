@@ -25,3 +25,12 @@ func (s *Service) FindUser(ctx context.Context, email string) (User, error) {
 	log.Printf("user found %v", u)
 	return u, nil
 }
+
+func (s *Service) CreateUser(ctx context.Context, user User) error {
+	err := s.repo.Create(ctx, user)
+	if err != nil {
+		log.Printf("error: %v", err)
+		return err
+	}
+	return nil
+}

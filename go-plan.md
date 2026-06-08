@@ -81,11 +81,11 @@ Use the **Tour of Go** as a lookup, not a course. Write small throwaway snippets
 - **Done:** `/healthz` + one resource endpoint served through the full middleware chain; Ctrl-C shuts down cleanly.
 
 ## Day 5 — Fri Jun 5: Postgres — pgx + sqlc + migrations (first DB-backed slice)
-- [ ] **Run Postgres locally.** How: `docker run` Postgres (you'll fold it into compose on Day 15); create your database.
-- [ ] **Migrations.** How: `golang-migrate`; write `0001_init.up.sql` / `.down.sql` (a `users` table); run via `make migrate`. This is your Flyway equivalent — versioned schema in git.
-- [ ] **Type-safe queries with sqlc.** How: put SQL in `query.sql`, configure `sqlc.yaml`, run `sqlc generate` (that's `go generate`). It emits Go functions with typed params and results — no ORM, no runtime surprises.
-- [ ] **Implement the repository.** How: make your `UserRepo` interface concrete using the generated code via `pgx`; pass `ctx` to every query; do one write inside a transaction.
-- [ ] **Wire the vertical slice.** How: repo → service → handler so a real HTTP request reads/writes Postgres.
+- [x] **Run Postgres locally.** How: `docker run` Postgres (you'll fold it into compose on Day 15); create your database.
+- [x] **Migrations.** How: `golang-migrate`; write `0001_init.up.sql` / `.down.sql` (a `users` table); run via `make migrate`. This is your Flyway equivalent — versioned schema in git.
+- [x] **Type-safe queries with sqlc.** How: put SQL in `query.sql`, configure `sqlc.yaml`, run `sqlc generate` (that's `go generate`). It emits Go functions with typed params and results — no ORM, no runtime surprises.
+- [x] **Implement the repository.** How: make your `UserRepo` interface concrete using the generated code via `pgx`; pass `ctx` to every query; do one write inside a transaction.
+- [x] **Wire the vertical slice.** How: repo → service → handler so a real HTTP request reads/writes Postgres.
 - **Done:** a `POST` then `GET` round-trips through the DB. First full slice complete.
 
 ---

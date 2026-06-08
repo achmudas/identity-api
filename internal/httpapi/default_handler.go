@@ -22,8 +22,8 @@ func (h *Handler) Healthz(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (h *Handler) User(w http.ResponseWriter, r *http.Request) {
-	u, err := h.userService.FindUser(r.Context(), "email@domain.com")
+func (h *Handler) FindUser(w http.ResponseWriter, r *http.Request) {
+	u, err := h.userService.FindUser(r.Context(), r.PathValue("email"))
 	if errors.Is(err, user.ErrNotFound) {
 		respondError(w, http.StatusNotFound, httpapierrors.APIError{Code: "not_found", Message: "User not found."})
 		return
@@ -33,6 +33,23 @@ func (h *Handler) User(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respondUser(w, http.StatusOK, u)
+}
+
+func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
+	dec := json.NewDecoder(r.Body)
+	u := &user.User{}
+	err := dec.Decode(u)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, httpapierrors.APIError{Code: "bad_error", Message: "Something bad happened when creating new user."})
+		return
+	}
+
+	err = h.userService.CreateUser(r.Context(), *u)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, httpapierrors.APIError{Code: "bad_error", Message: "Something bad happened when creating for user."})
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
 }
 
 func respondError(w http.ResponseWriter, status int, apiError httpapierrors.APIError) {

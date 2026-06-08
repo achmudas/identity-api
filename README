@@ -1,0 +1,5 @@
+### Some minor curl commands
+
+```bash
+curl -v localhost:8080/user -X POST -d'{"username":"nick", "password":"sdsdsds", "email":"nick@email.com"}'
+```
