@@ -2,6 +2,7 @@ package config
 
 import (
 	"github.com/caarlos0/env/v11"
+	// autoload is needed to be imported only that's why it's blank
 	_ "github.com/joho/godotenv/autoload"
 )
 
@@ -23,11 +24,11 @@ type AppConfig struct {
 }
 
 type KeycloakConfig struct {
-	KeycloakUrl          string `env:"KEYCLOAK_URL"`
+	KeycloakURL          string `env:"KEYCLOAK_URL"`
 	KeycloakRealm        string `env:"KEYCLOAK_REALM"`
-	KeycloakClientId     string `env:"KEYCLOAK_CLIENT_ID"`
+	KeycloakClientID     string `env:"KEYCLOAK_CLIENT_ID"`
 	KeycloakClientSecret string `env:"KEYCLOAK_CLIENT_SECRET"`
-	KeycloakRedirectUrl  string `env:"KEYCLOAK_REDIRECT_URL"`
+	KeycloakRedirectURL  string `env:"KEYCLOAK_REDIRECT_URL"`
 }
 
 func Load() (Config, error) {

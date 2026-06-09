@@ -22,6 +22,15 @@ func (h *Handler) Healthz(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func (h *Handler) Home(w http.ResponseWriter, _ *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	_, err := w.Write([]byte("Hello world"))
+	if err != nil {
+		log.Printf("Failed to write bytes to response: %v", err)
+	}
+
+}
+
 func (h *Handler) FindUser(w http.ResponseWriter, r *http.Request) {
 	u, err := h.userService.FindUser(r.Context(), r.PathValue("email"))
 	if errors.Is(err, user.ErrNotFound) {

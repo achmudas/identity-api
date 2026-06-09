@@ -94,9 +94,9 @@ Use the **Tour of Go** as a lookup, not a course. Write small throwaway snippets
 
 ## Day 6 — Mon Jun 8: OAuth/OIDC — the login flow
 - [x] **Run Keycloak.** How: official Keycloak Docker image; in the admin console create a realm, a client (public + PKCE, or confidential), and a test user. Note the discovery URL `…/.well-known/openid-configuration`.
-- [ ] **Build the OAuth2 client.** How: `golang.org/x/oauth2` `Config` (client ID/secret, endpoints, redirect URL, scopes including `openid`); generate a random `state` + PKCE verifier; redirect the browser to the auth URL.
-- [ ] **Handle the callback.** How: verify `state` matches; exchange `code` for tokens with `config.Exchange(ctx, code)`.
-- [ ] **Verify the ID token (OIDC).** How: build a `coreos/go-oidc` provider from the issuer URL; verify the ID token (signature via JWKS, issuer, audience, expiry); read claims (`sub`, `email`).
+- [x] **Build the OAuth2 client.** How: `golang.org/x/oauth2` `Config` (client ID/secret, endpoints, redirect URL, scopes including `openid`); generate a random `state` + PKCE verifier; redirect the browser to the auth URL.
+- [x] **Handle the callback.** How: verify `state` matches; exchange `code` for tokens with `config.Exchange(ctx, code)`.
+- [x] **Verify the ID token (OIDC).** How: build a `coreos/go-oidc` provider from the issuer URL; verify the ID token (signature via JWKS, issuer, audience, expiry); read claims (`sub`, `email`).
 - **Done:** you log in through Keycloak and land back in your app with a verified identity.
 
 ## Day 7 — Tue Jun 9: Protecting the API

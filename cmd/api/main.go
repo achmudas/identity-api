@@ -3,6 +3,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/achmudas/identity-api/internal/auth"
 	"github.com/achmudas/identity-api/internal/config"
 	"github.com/achmudas/identity-api/internal/httpapi"
 	"github.com/achmudas/identity-api/internal/logger"
@@ -27,6 +29,7 @@ import (
 )
 
 func main() {
+	ctx := context.Background()
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatalf("invalid config: %v", err)
@@ -34,11 +37,17 @@ func main() {
 
 	connString := fmt.Sprintf("postgres://%s:%s@%s/postgres?sslmode=disable&search_path=%s", cfg.DBConfig.DBUsername, cfg.DBConfig.DBPassword, cfg.DBConfig.DBUrl, cfg.DBConfig.DBSchema)
 	m, err := migrate.New("file://db/migrations", connString)
+	if err != nil {
+		log.Fatalf("failed to initialize migration %v", err)
+	}
 
 	m.Log = &logger.MigrateLogger{}
-	m.Steps(2)
+	err = m.Up()
+	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		log.Fatalf("failed to run migration: %v", err)
+	}
 
-	pool, err := pgxpool.New(context.Background(), connString)
+	pool, err := pgxpool.New(ctx, connString)
 	if err != nil {
 		log.Fatalf("failed to initialize connection pool %v", err)
 	}
@@ -54,13 +63,20 @@ func main() {
 		AllowedOrigins: []string{"https://*", "http://*"},
 	}))
 
+	// #TODO temp - later on this will be handled in middleware
+	keycloak := auth.NewKeycloak(&cfg.KeycloakConfig)
+
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
 	r.Get("/healthz", handler.Healthz)
+	r.Get("/auth/authenticate", keycloak.AuthenticateRedirect)
+	r.Get("/auth/callback", keycloak.CallbackAuthorize)
+
 	r.Get("/user/{email}", handler.FindUser)
 	r.Post("/user", handler.CreateUser)
+	r.Get("/", handler.Home)
 
 	srv := &http.Server{Addr: ":" + cfg.AppConfig.Port, Handler: r}
 
