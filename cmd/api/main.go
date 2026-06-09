@@ -32,7 +32,7 @@ func main() {
 		log.Fatalf("invalid config: %v", err)
 	}
 
-	connString := fmt.Sprintf("postgres://%s:%s@%s/postgres?sslmode=disable&search_path=%s", cfg.DBUsername, cfg.DBPassword, cfg.DBUrl, cfg.DBSchema)
+	connString := fmt.Sprintf("postgres://%s:%s@%s/postgres?sslmode=disable&search_path=%s", cfg.DBConfig.DBUsername, cfg.DBConfig.DBPassword, cfg.DBConfig.DBUrl, cfg.DBConfig.DBSchema)
 	m, err := migrate.New("file://db/migrations", connString)
 
 	m.Log = &logger.MigrateLogger{}
@@ -62,7 +62,7 @@ func main() {
 	r.Get("/user/{email}", handler.FindUser)
 	r.Post("/user", handler.CreateUser)
 
-	srv := &http.Server{Addr: ":" + cfg.Port, Handler: r}
+	srv := &http.Server{Addr: ":" + cfg.AppConfig.Port, Handler: r}
 
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {

@@ -1,21 +1,41 @@
 package config
 
-import "github.com/caarlos0/env/v11"
+import (
+	"github.com/caarlos0/env/v11"
+	_ "github.com/joho/godotenv/autoload"
+)
 
 type Config struct {
+	DBConfig       DBConfig
+	AppConfig      AppConfig
+	KeycloakConfig KeycloakConfig
+}
+
+type DBConfig struct {
 	DBUrl      string `env:"DB_HOST"`
 	DBUsername string `env:"DB_USERNAME"`
 	DBPassword string `env:"DB_PASSWORD"`
 	DBSchema   string `env:"DB_SCHEMA"`
-	Port       string `env:"APP_PORT"`
+}
+
+type AppConfig struct {
+	Port string `env:"APP_PORT"`
+}
+
+type KeycloakConfig struct {
+	KeycloakUrl          string `env:"KEYCLOAK_URL"`
+	KeycloakRealm        string `env:"KEYCLOAK_REALM"`
+	KeycloakClientId     string `env:"KEYCLOAK_CLIENT_ID"`
+	KeycloakClientSecret string `env:"KEYCLOAK_CLIENT_SECRET"`
+	KeycloakRedirectUrl  string `env:"KEYCLOAK_REDIRECT_URL"`
 }
 
 func Load() (Config, error) {
-	cfg := Config{}
-	if err := env.ParseWithOptions(&cfg, env.Options{
+	config := Config{}
+	if err := env.ParseWithOptions(&config, env.Options{
 		RequiredIfNoDef: true,
 	}); err != nil {
 		return Config{}, err
 	}
-	return cfg, nil
+	return config, nil
 }

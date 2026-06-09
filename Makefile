@@ -1,7 +1,7 @@
 .PHONY: run build test lint fmt tidy generate migrate
 
 run:        ## run Service A locally
-	export DB_HOST=localhost:5432 DB_USERNAME=postgres DB_PASSWORD=pass DB_SCHEMA=identityapi APP_PORT=8080 && go run ./cmd/api
+	go run ./cmd/api
 
 build:      ## compile the static binary (used by the Dockerfile later)
 	CGO_ENABLED=0 go build -o bin/api ./cmd/api
