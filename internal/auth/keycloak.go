@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sync"
 
 	"github.com/achmudas/identity-api/internal/config"
 	"github.com/coreos/go-oidc/v3/oidc"
@@ -16,6 +17,8 @@ type Keycloak struct {
 	oauth2Conf    *oauth2.Config
 	tokenVerifier *oidc.IDTokenVerifier
 	provider      *oidc.Provider
+	sessions      map[string]*oauth2.Token
+	mu            sync.Mutex
 }
 
 func NewKeycloak(keycloakConf *config.KeycloakConfig) *Keycloak {
@@ -32,6 +35,8 @@ func NewKeycloak(keycloakConf *config.KeycloakConfig) *Keycloak {
 		Endpoint:     prov.Endpoint()},
 		provider:      prov,
 		tokenVerifier: prov.Verifier(&oidc.Config{ClientID: keycloakConf.KeycloakClientID}),
+		sessions:      make(map[string]*oauth2.Token),
+		mu:            sync.Mutex{},
 	}
 }
 
@@ -43,7 +48,7 @@ func (k *Keycloak) AuthenticateRedirect(w http.ResponseWriter, r *http.Request) 
 	http.Redirect(w, r, k.oauth2Conf.AuthCodeURL(state, oauth2.S256ChallengeOption(pkce)), http.StatusFound)
 }
 
-func (k *Keycloak) CallbackAuthorize(w http.ResponseWriter, r *http.Request) {
+func (k *Keycloak) CallbackAuthenticate(w http.ResponseWriter, r *http.Request) {
 	// Use the authorization code that is pushed to the redirect
 	// URL. Exchange will do the handshake to retrieve the
 	// initial access token. The HTTP Client returned by
@@ -106,9 +111,69 @@ func (k *Keycloak) CallbackAuthorize(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-	http.Redirect(w, r, "http://localhost:8080", http.StatusFound)
 
-	// client := k.oauth2Conf.Client(r.Context(), tok)
-	// // #TODO not sure what to do here
-	// client.Get("http://localhost:8080/")
+	sessionID := uuid.NewString()
+	k.mu.Lock()
+	k.sessions[sessionID] = oauth2Token
+	k.mu.Unlock()
+	http.SetCookie(w, &http.Cookie{Name: "session_id", Value: sessionID, HttpOnly: true, SameSite: http.SameSiteLaxMode, Path: "/"})
+	http.Redirect(w, r, "http://localhost:8080", http.StatusFound)
+}
+
+// #TODO cache it
+func (k *Keycloak) AuthClaims(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cookie, err := r.Cookie("session_id")
+		if err != nil {
+			log.Printf("Failed to retrieve session id %v", err)
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		k.mu.Lock()
+		token, ok := k.sessions[cookie.Value]
+		k.mu.Unlock()
+
+		if !ok {
+			log.Printf("No session ID in cookies")
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		tokenSource := k.oauth2Conf.TokenSource(r.Context(), token)
+		_, err = k.provider.UserInfo(r.Context(), tokenSource)
+		if err != nil {
+			log.Printf("Failed to verify token %v", err)
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		accessVerifier := k.provider.Verifier(&oidc.Config{SkipClientIDCheck: true})
+		accessToken, err := accessVerifier.Verify(r.Context(), token.AccessToken)
+
+		if err != nil {
+			log.Printf("Failed to verify token %v", err)
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		var claims struct {
+			RealmAccess struct {
+				Roles []string `json:"roles"`
+			} `json:"realm_access"`
+			ResourceAccess map[string]struct {
+				Roles []string `json:"roles"`
+			} `json:"resource_access"`
+			Email string `json:"email"`
+		}
+		if err := accessToken.Claims(&claims); err != nil {
+			log.Printf("Failed to retrieve claims from access token %v", err)
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), RolesKey, claims.ResourceAccess["bestclient"].Roles)
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }

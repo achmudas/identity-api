@@ -100,10 +100,10 @@ Use the **Tour of Go** as a lookup, not a course. Write small throwaway snippets
 - **Done:** you log in through Keycloak and land back in your app with a verified identity.
 
 ## Day 7 — Tue Jun 9: Protecting the API
-- [ ] **Establish your own session/token.** How: after login, either set a secure session cookie or mint a short-lived app JWT. Pick one and implement it.
-- [ ] **Auth middleware.** How: read the bearer token; verify against the provider's JWKS (cache the keys); check `exp`/`iss`/`aud`; put the principal (`sub`, roles) into the request `context`; otherwise return 401.
-- [ ] **Authorization.** How: a small middleware/helper that checks roles or claims and returns 403 when missing.
-- [ ] **Security hygiene.** How: cookies `HttpOnly`+`Secure`+`SameSite`; all secrets from env; run `govulncheck ./...` and fix anything it flags.
+- [x] **Establish your own session/token.** How: after login, either set a secure session cookie or mint a short-lived app JWT. Pick one and implement it.
+- [x] **Auth middleware.** How: read the bearer token; verify against the provider's JWKS (cache the keys); check `exp`/`iss`/`aud`; put the principal (`sub`, roles) into the request `context`; otherwise return 401.
+- [x] **Authorization.** How: a small middleware/helper that checks roles or claims and returns 403 when missing.
+- [x] **Security hygiene.** How: cookies `HttpOnly`+`Secure`+`SameSite`; all secrets from env; run `govulncheck ./...` and fix anything it flags.
 - **Done:** a protected endpoint returns data with a valid token and 401/403 without.
 
 ## Day 8 — Wed Jun 10: Buffer + consolidation

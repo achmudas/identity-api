@@ -22,7 +22,7 @@ func (h *Handler) Healthz(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (h *Handler) Home(w http.ResponseWriter, _ *http.Request) {
+func (h *Handler) Home(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	_, err := w.Write([]byte("Hello world"))
 	if err != nil {

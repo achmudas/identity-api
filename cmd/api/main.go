@@ -63,7 +63,6 @@ func main() {
 		AllowedOrigins: []string{"https://*", "http://*"},
 	}))
 
-	// #TODO temp - later on this will be handled in middleware
 	keycloak := auth.NewKeycloak(&cfg.KeycloakConfig)
 
 	r.Use(middleware.RequestID)
@@ -72,11 +71,15 @@ func main() {
 
 	r.Get("/healthz", handler.Healthz)
 	r.Get("/auth/authenticate", keycloak.AuthenticateRedirect)
-	r.Get("/auth/callback", keycloak.CallbackAuthorize)
+	r.Get("/auth/callback", keycloak.CallbackAuthenticate)
 
-	r.Get("/user/{email}", handler.FindUser)
-	r.Post("/user", handler.CreateUser)
-	r.Get("/", handler.Home)
+	r.Group(func(r chi.Router) {
+		r.Use(keycloak.AuthClaims)
+		r.Use(auth.AuthMiddleware)
+		r.Get("/user/{email}", handler.FindUser)
+		r.Post("/user", handler.CreateUser)
+		r.Get("/", handler.Home)
+	})
 
 	srv := &http.Server{Addr: ":" + cfg.AppConfig.Port, Handler: r}
 
