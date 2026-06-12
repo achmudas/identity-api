@@ -107,8 +107,8 @@ Use the **Tour of Go** as a lookup, not a course. Write small throwaway snippets
 - **Done:** a protected endpoint returns data with a valid token and 401/403 without.
 
 ## Day 8 — Wed Jun 10: Buffer + consolidation
-- [ ] **Finish OAuth + refactor.** How: OAuth almost always overruns Days 6–7 — this is your slack. Tidy the auth package, extract the token-verifier behind an interface (so it's mockable on Day 9), and make sure the middleware chain reads cleanly.
-- [ ] **Catch up on any earlier slip** (DB transactions, error envelope, config validation).
+- [x] **Finish OAuth + refactor.** How: OAuth almost always overruns Days 6–7 — this is your slack. Tidy the auth package, extract the token-verifier behind an interface (so it's mockable on Day 9), and make sure the middleware chain reads cleanly.
+- [x] **Catch up on any earlier slip** (DB transactions, error envelope, config validation).
 - **Done:** Service A is feature-complete for auth + persistence and you're not behind.
 
 ## Day 9 — Thu Jun 11: Tests for Service A

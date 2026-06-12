@@ -26,12 +26,13 @@ type cachedClaims struct {
 }
 
 type Keycloak struct {
-	oauth2Conf    *oauth2.Config
-	tokenVerifier *oidc.IDTokenVerifier
-	provider      *oidc.Provider
-	sessions      map[string]*oauth2.Token
-	mu            sync.Mutex
-	claimsCache   map[string]cachedClaims
+	oauth2Conf     *oauth2.Config
+	tokenVerifier  *oidc.IDTokenVerifier
+	accessVerifier *oidc.IDTokenVerifier
+	provider       *oidc.Provider
+	sessions       map[string]*oauth2.Token
+	mu             sync.Mutex
+	claimsCache    map[string]cachedClaims
 }
 
 func NewKeycloak(keycloakConf *config.KeycloakConfig) *Keycloak {
@@ -46,11 +47,12 @@ func NewKeycloak(keycloakConf *config.KeycloakConfig) *Keycloak {
 		RedirectURL:  keycloakConf.KeycloakRedirectURL,
 		Scopes:       []string{oidc.ScopeOpenID, "profile", "email"},
 		Endpoint:     prov.Endpoint()},
-		provider:      prov,
-		tokenVerifier: prov.Verifier(&oidc.Config{ClientID: keycloakConf.KeycloakClientID}),
-		sessions:      make(map[string]*oauth2.Token),
-		mu:            sync.Mutex{},
-		claimsCache:   make(map[string]cachedClaims),
+		provider:       prov,
+		tokenVerifier:  prov.Verifier(&oidc.Config{ClientID: keycloakConf.KeycloakClientID}),
+		accessVerifier: prov.Verifier(&oidc.Config{SkipClientIDCheck: true}),
+		sessions:       make(map[string]*oauth2.Token),
+		mu:             sync.Mutex{},
+		claimsCache:    make(map[string]cachedClaims),
 	}
 }
 
@@ -173,8 +175,7 @@ func (k *Keycloak) AuthClaims(next http.Handler) http.Handler {
 			return
 		}
 
-		accessVerifier := k.provider.Verifier(&oidc.Config{SkipClientIDCheck: true})
-		accessToken, err := accessVerifier.Verify(r.Context(), token.AccessToken)
+		accessToken, err := k.accessVerifier.Verify(r.Context(), token.AccessToken)
 
 		if err != nil {
 			log.Printf("Failed to verify token %v", err)
@@ -197,7 +198,10 @@ func (k *Keycloak) AuthClaims(next http.Handler) http.Handler {
 			return
 		}
 
+		k.mu.Lock()
 		k.claimsCache[sessionID] = cachedClaims{roles: claims.ResourceAccess["bestclient"].Roles, cachedAt: time.Now()}
+		k.mu.Unlock()
+
 		ctx := context.WithValue(r.Context(), RolesKey, claims.ResourceAccess["bestclient"].Roles)
 
 		next.ServeHTTP(w, r.WithContext(ctx))

@@ -75,7 +75,7 @@ func main() {
 
 	r.Group(func(r chi.Router) {
 		r.Use(authenticator.AuthClaims)
-		r.Use(auth.AuthMiddleware)
+		r.Use(auth.Middleware)
 		r.Get("/user/{email}", handler.FindUser)
 		r.Post("/user", handler.CreateUser)
 		r.Get("/", handler.Home)
