@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/achmudas/identity-api/internal/config"
 	"github.com/coreos/go-oidc/v3/oidc"
@@ -13,12 +14,24 @@ import (
 	"golang.org/x/oauth2"
 )
 
+type Authenticator interface {
+	AuthenticateRedirect(w http.ResponseWriter, r *http.Request)
+	CallbackAuthenticate(w http.ResponseWriter, r *http.Request)
+	AuthClaims(next http.Handler) http.Handler
+}
+
+type cachedClaims struct {
+	roles    []string
+	cachedAt time.Time
+}
+
 type Keycloak struct {
 	oauth2Conf    *oauth2.Config
 	tokenVerifier *oidc.IDTokenVerifier
 	provider      *oidc.Provider
 	sessions      map[string]*oauth2.Token
 	mu            sync.Mutex
+	claimsCache   map[string]cachedClaims
 }
 
 func NewKeycloak(keycloakConf *config.KeycloakConfig) *Keycloak {
@@ -37,6 +50,7 @@ func NewKeycloak(keycloakConf *config.KeycloakConfig) *Keycloak {
 		tokenVerifier: prov.Verifier(&oidc.Config{ClientID: keycloakConf.KeycloakClientID}),
 		sessions:      make(map[string]*oauth2.Token),
 		mu:            sync.Mutex{},
+		claimsCache:   make(map[string]cachedClaims),
 	}
 }
 
@@ -120,7 +134,6 @@ func (k *Keycloak) CallbackAuthenticate(w http.ResponseWriter, r *http.Request) 
 	http.Redirect(w, r, "http://localhost:8080", http.StatusFound)
 }
 
-// #TODO cache it
 func (k *Keycloak) AuthClaims(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("session_id")
@@ -130,13 +143,25 @@ func (k *Keycloak) AuthClaims(next http.Handler) http.Handler {
 			return
 		}
 
+		sessionID := cookie.Value
+
 		k.mu.Lock()
-		token, ok := k.sessions[cookie.Value]
+		token, ok := k.sessions[sessionID]
 		k.mu.Unlock()
 
 		if !ok {
 			log.Printf("No session ID in cookies")
 			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		k.mu.Lock()
+		cached, ok := k.claimsCache[sessionID]
+		k.mu.Unlock()
+
+		if ok && time.Since(cached.cachedAt) < 2*time.Minute {
+			ctx := context.WithValue(r.Context(), RolesKey, cached.roles)
+			next.ServeHTTP(w, r.WithContext(ctx))
 			return
 		}
 
@@ -172,6 +197,7 @@ func (k *Keycloak) AuthClaims(next http.Handler) http.Handler {
 			return
 		}
 
+		k.claimsCache[sessionID] = cachedClaims{roles: claims.ResourceAccess["bestclient"].Roles, cachedAt: time.Now()}
 		ctx := context.WithValue(r.Context(), RolesKey, claims.ResourceAccess["bestclient"].Roles)
 
 		next.ServeHTTP(w, r.WithContext(ctx))

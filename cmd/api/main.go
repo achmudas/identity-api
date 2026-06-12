@@ -63,18 +63,18 @@ func main() {
 		AllowedOrigins: []string{"https://*", "http://*"},
 	}))
 
-	keycloak := auth.NewKeycloak(&cfg.KeycloakConfig)
+	var authenticator auth.Authenticator = auth.NewKeycloak(&cfg.KeycloakConfig)
 
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
 	r.Get("/healthz", handler.Healthz)
-	r.Get("/auth/authenticate", keycloak.AuthenticateRedirect)
-	r.Get("/auth/callback", keycloak.CallbackAuthenticate)
+	r.Get("/auth/authenticate", authenticator.AuthenticateRedirect)
+	r.Get("/auth/callback", authenticator.CallbackAuthenticate)
 
 	r.Group(func(r chi.Router) {
-		r.Use(keycloak.AuthClaims)
+		r.Use(authenticator.AuthClaims)
 		r.Use(auth.AuthMiddleware)
 		r.Get("/user/{email}", handler.FindUser)
 		r.Post("/user", handler.CreateUser)
