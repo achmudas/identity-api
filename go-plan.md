@@ -112,10 +112,10 @@ Use the **Tour of Go** as a lookup, not a course. Write small throwaway snippets
 - **Done:** Service A is feature-complete for auth + persistence and you're not behind.
 
 ## Day 9 — Thu Jun 11: Tests for Service A
-- [ ] **Table-driven tests.** How: the dominant Go pattern — a slice of `{name, input, want}` cases looped with `t.Run`. Write them for the auth middleware (valid / expired / wrong-audience tokens) and a repo function.
-- [ ] **Hand-written fakes.** How: because interfaces are implicit, write a tiny fake `UserRepo` and a fake `TokenVerifier` for service tests — no mock framework needed (reach for `gomock`/`mockery` only if it gets repetitive).
-- [ ] **HTTP tests.** How: `net/http/httptest` `ResponseRecorder` to exercise a handler end-to-end without opening a real port.
-- [ ] **Integration test.** How: `testcontainers-go` starts an ephemeral Postgres; run your migrations against it; test the repository for real. Run everything with `go test -race ./...`.
+- [x] **Table-driven tests.** How: the dominant Go pattern — a slice of `{name, input, want}` cases looped with `t.Run`. Write them for the auth middleware (valid / expired / wrong-audience tokens) and a repo function.
+- [x] **Hand-written fakes.** How: because interfaces are implicit, write a tiny fake `UserRepo` and a fake `TokenVerifier` for service tests — no mock framework needed (reach for `gomock`/`mockery` only if it gets repetitive).
+- [x] **HTTP tests.** How: `net/http/httptest` `ResponseRecorder` to exercise a handler end-to-end without opening a real port.
+- [x] **Integration test.** How: `testcontainers-go` starts an ephemeral Postgres; run your migrations against it; test the repository for real. Run everything with `go test -race ./...`.
 - **Done:** `make test` is green with one real-DB integration test; you now know `go test`/`-race`/`-cover` by using them.
 
 ## Day 10 — Fri Jun 12: gRPC Service B (server) with buf
