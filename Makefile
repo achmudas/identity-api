@@ -23,3 +23,6 @@ generate:   ## runs sqlc (Day 5) and buf (Day 10) via //go:generate directives
 
 migrate:    ## apply DB migrations (Day 5)
 	migrate -path ./db/migrations -database "$(DB_URL)" up
+
+run-profile:
+	go run ./cmd/profile/

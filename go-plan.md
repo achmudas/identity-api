@@ -119,9 +119,9 @@ Use the **Tour of Go** as a lookup, not a course. Write small throwaway snippets
 - **Done:** `make test` is green with one real-DB integration test; you now know `go test`/`-race`/`-cover` by using them.
 
 ## Day 10 — Fri Jun 12: gRPC Service B (server) with buf
-- [ ] **Define the contract.** How: write a small `.proto` (e.g. a `Profile` service with one method + messages); manage it with `buf` (`buf.yaml`, `buf.gen.yaml`), then `buf lint` and `buf generate` to emit Go stubs. `buf` is the enterprise-standard proto workflow.
-- [ ] **Implement the server.** How: a new `cmd/profile/main.go`; implement the generated server interface backed by a trivial store; serve gRPC on its own port.
-- [ ] **Add an interceptor.** How: a unary logging + panic-recovery interceptor — gRPC's equivalent of HTTP middleware.
+- [x] **Define the contract.** How: write a small `.proto` (e.g. a `Profile` service with one method + messages); manage it with `buf` (`buf.yaml`, `buf.gen.yaml`), then `buf lint` and `buf generate` to emit Go stubs. `buf` is the enterprise-standard proto workflow.
+- [x] **Implement the server.** How: a new `cmd/profile/main.go`; implement the generated server interface backed by a trivial store; serve gRPC on its own port.
+- [x] **Add an interceptor.** How: a unary logging + panic-recovery interceptor — gRPC's equivalent of HTTP middleware.
 - **Done:** Service B serves the gRPC method (verify with `grpcurl` or a quick client).
 
 ---
