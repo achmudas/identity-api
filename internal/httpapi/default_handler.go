@@ -71,7 +71,7 @@ func respondError(w http.ResponseWriter, status int, apiError httpapierrors.APIE
 	respond(w, status, v)
 }
 
-func respondUser(w http.ResponseWriter, status int, user user.User) {
+func respondUser(w http.ResponseWriter, status int, user user.UserDTO) {
 	v, err := json.Marshal(user)
 	if err != nil {
 		log.Printf("error when marshaling response: %v", err)

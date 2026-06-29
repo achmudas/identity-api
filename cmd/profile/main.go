@@ -16,6 +16,7 @@ import (
 	"github.com/achmudas/identity-api/gen/profile/v1/profilev1connect"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -23,16 +24,22 @@ type profileServiceServer struct {
 	profilev1connect.UnimplementedProfileServiceHandler
 }
 
-func (ps *profileServiceServer) GetProfileData(context.Context, *v1.GetProfileDataRequest) (*v1.GetProfileDataResponse, error) {
+func (ps *profileServiceServer) GetProfileData(ctx context.Context, req *v1.GetProfileDataRequest) (*v1.GetProfileDataResponse, error) {
 	// #TODO would make sense to create actual service, sqls, etc. but too lazy. Where I should store them?
-	return &v1.GetProfileDataResponse{Profile: &v1.Profile{UserId: 1, AvatarLink: "http://localhost:8081/me/1.png", Address: "address1, city1", BirthDate: timestamppb.New(time.Date(
+	return &v1.GetProfileDataResponse{Profile: &v1.Profile{UserId: req.UserId, AvatarLink: "http://localhost:8085/me/1.png", Address: "address1, city1", BirthDate: timestamppb.New(time.Date(
 		2009, 11, 17, 20, 34, 58, 651387237, time.UTC))}}, nil
 }
 
 func loggingInterceptor() connect.UnaryInterceptorFunc {
 	return connect.UnaryInterceptorFunc(func(next connect.UnaryFunc) connect.UnaryFunc {
 		return connect.UnaryFunc(func(ctx context.Context, req connect.AnyRequest) (n connect.AnyResponse, err error) {
-			log.Printf("calling procedure: %s", req.Spec().Procedure)
+			md, ok := metadata.FromIncomingContext(ctx)
+			if ok {
+				requestIDs := md.Get("x-request-id")
+				if len(requestIDs) > 0 {
+					log.Printf("request-id: %s procedure: %s", requestIDs[0], req.Spec().Procedure)
+				}
+			}
 			defer func() {
 				if r := recover(); r != nil {
 					log.Printf("panic: %v\n%s", r, debug.Stack())
@@ -44,7 +51,7 @@ func loggingInterceptor() connect.UnaryInterceptorFunc {
 	})
 }
 
-const address = "localhost:8081"
+const address = "localhost:8085"
 
 func main() {
 	mux := http.NewServeMux()

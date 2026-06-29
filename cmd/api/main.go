@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/achmudas/identity-api/gen/profile/v1/profilev1connect"
 	"github.com/achmudas/identity-api/internal/auth"
 	"github.com/achmudas/identity-api/internal/config"
 	"github.com/achmudas/identity-api/internal/httpapi"
@@ -51,8 +52,11 @@ func main() {
 		log.Fatalf("failed to initialize connection pool %v", err)
 	}
 
+	// #TODO put it under config
+	client := profilev1connect.NewProfileServiceClient(http.DefaultClient, "http://localhost:8085")
+
 	var repo user.Repo = store.NewPostgresRepo(pool)
-	service := user.NewService(repo)
+	service := user.NewService(repo, client)
 
 	handler := httpapi.NewHandler(service)
 

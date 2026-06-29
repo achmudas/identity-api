@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	v1 "github.com/achmudas/identity-api/gen/profile/v1"
 	"github.com/achmudas/identity-api/internal/user"
 )
 
@@ -15,6 +16,17 @@ type MockRepo struct {
 
 func NewMockRepo() *MockRepo {
 	return &MockRepo{}
+}
+
+type MockProfileServiceClient struct {
+}
+
+func NewMockProfileServiceClient() *MockProfileServiceClient {
+	return &MockProfileServiceClient{}
+}
+
+func (m *MockProfileServiceClient) GetProfileData(context.Context, *v1.GetProfileDataRequest) (*v1.GetProfileDataResponse, error) {
+	return &v1.GetProfileDataResponse{Profile: &v1.Profile{}}, nil
 }
 
 func (m *MockRepo) Get(_ context.Context, email string) (user.User, error) {
@@ -45,7 +57,7 @@ func TestUserFinding(t *testing.T) {
 
 	w := httptest.NewRecorder()
 
-	handler := NewHandler(user.NewService(NewMockRepo()))
+	handler := NewHandler(user.NewService(NewMockRepo(), NewMockProfileServiceClient()))
 
 	handler.FindUser(w, req)
 
@@ -54,14 +66,14 @@ func TestUserFinding(t *testing.T) {
 	defer res.Body.Close()
 
 	dec := json.NewDecoder(res.Body)
-	u := &user.User{}
+	u := &user.UserDTO{}
 	err := dec.Decode(u)
 
 	if err != nil {
 		t.Errorf("expected error to be nil got %v", err)
 	}
-	if u.UserID != 5 {
-		t.Errorf("expected to receive user with ID 5 got %d", u.UserID)
+	if u.ID != 5 {
+		t.Errorf("expected to receive user with ID 5 got %d", u.ID)
 	}
 
 }
