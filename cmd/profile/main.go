@@ -14,6 +14,7 @@ import (
 	"connectrpc.com/connect"
 	v1 "github.com/achmudas/identity-api/gen/profile/v1"
 	"github.com/achmudas/identity-api/gen/profile/v1/profilev1connect"
+	"github.com/achmudas/identity-api/internal/config"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 	"google.golang.org/grpc/metadata"
@@ -26,7 +27,7 @@ type profileServiceServer struct {
 
 func (ps *profileServiceServer) GetProfileData(ctx context.Context, req *v1.GetProfileDataRequest) (*v1.GetProfileDataResponse, error) {
 	// #TODO would make sense to create actual service, sqls, etc. but too lazy. Where I should store them?
-	return &v1.GetProfileDataResponse{Profile: &v1.Profile{UserId: req.UserId, AvatarLink: "http://localhost:8085/me/1.png", Address: "address1, city1", BirthDate: timestamppb.New(time.Date(
+	return &v1.GetProfileDataResponse{Profile: &v1.Profile{UserId: req.UserId, AvatarLink: "http://cdn.service/me/1.png", Address: "address1, city1", BirthDate: timestamppb.New(time.Date(
 		2009, 11, 17, 20, 34, 58, 651387237, time.UTC))}}, nil
 }
 
@@ -51,13 +52,17 @@ func loggingInterceptor() connect.UnaryInterceptorFunc {
 	})
 }
 
-const address = "localhost:8085"
-
 func main() {
+
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatalf("Failed to load config %v", err)
+	}
+
 	mux := http.NewServeMux()
 	path, handler := profilev1connect.NewProfileServiceHandler(&profileServiceServer{}, connect.WithInterceptors(loggingInterceptor()))
 	mux.Handle(path, handler)
-	srv := &http.Server{Addr: address, Handler: h2c.NewHandler(mux, &http2.Server{})}
+	srv := &http.Server{Addr: cfg.AppConfig.ProfileUrl, Handler: h2c.NewHandler(mux, &http2.Server{})}
 
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {

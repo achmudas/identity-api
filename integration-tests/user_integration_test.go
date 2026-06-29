@@ -19,21 +19,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-
-	v1 "github.com/achmudas/identity-api/gen/profile/v1"
 )
-
-// #TODO all these mocks should be moved to a single place now
-type MockProfileServiceClient struct {
-}
-
-func NewMockProfileServiceClient() *MockProfileServiceClient {
-	return &MockProfileServiceClient{}
-}
-
-func (m *MockProfileServiceClient) GetProfileData(context.Context, *v1.GetProfileDataRequest) (*v1.GetProfileDataResponse, error) {
-	return &v1.GetProfileDataResponse{Profile: &v1.Profile{UserId: 5, AvatarLink: "", Address: "Address 1"}}, nil
-}
 
 func TestUserCreation(t *testing.T) {
 	tests := []struct {
@@ -100,5 +86,5 @@ func createUserService(t *testing.T, postgres *testcontainers.DockerContainer) *
 	}
 
 	var repo user.Repo = store.NewPostgresRepo(pool)
-	return user.NewService(repo, NewMockProfileServiceClient())
+	return user.NewService(repo)
 }

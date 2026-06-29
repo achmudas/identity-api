@@ -57,7 +57,7 @@ func TestUserFinding(t *testing.T) {
 
 	w := httptest.NewRecorder()
 
-	handler := NewHandler(user.NewService(NewMockRepo(), NewMockProfileServiceClient()))
+	handler := NewHandler(user.NewService(NewMockRepo()), NewMockProfileServiceClient())
 
 	handler.FindUser(w, req)
 

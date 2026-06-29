@@ -52,13 +52,12 @@ func main() {
 		log.Fatalf("failed to initialize connection pool %v", err)
 	}
 
-	// #TODO put it under config
-	client := profilev1connect.NewProfileServiceClient(http.DefaultClient, "http://localhost:8085")
+	client := profilev1connect.NewProfileServiceClient(http.DefaultClient, fmt.Sprintf("http://%s", cfg.AppConfig.ProfileUrl))
 
 	var repo user.Repo = store.NewPostgresRepo(pool)
-	service := user.NewService(repo, client)
+	service := user.NewService(repo)
 
-	handler := httpapi.NewHandler(service)
+	handler := httpapi.NewHandler(service, client)
 
 	r := chi.NewRouter()
 

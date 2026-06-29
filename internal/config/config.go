@@ -20,7 +20,8 @@ type DBConfig struct {
 }
 
 type AppConfig struct {
-	Port string `env:"APP_PORT"`
+	Port       string `env:"APP_PORT"`
+	ProfileUrl string `env:"PROFILE_URL"`
 }
 
 type KeycloakConfig struct {

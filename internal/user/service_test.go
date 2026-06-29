@@ -5,26 +5,13 @@ import (
 	"errors"
 	"strings"
 	"testing"
-
-	v1 "github.com/achmudas/identity-api/gen/profile/v1"
 )
 
 type MockRepo struct {
 }
 
-type MockProfileServiceClient struct {
-}
-
-func NewMockProfileServiceClient() *MockProfileServiceClient {
-	return &MockProfileServiceClient{}
-}
-
 func NewMockRepo() *MockRepo {
 	return &MockRepo{}
-}
-
-func (m *MockProfileServiceClient) GetProfileData(context.Context, *v1.GetProfileDataRequest) (*v1.GetProfileDataResponse, error) {
-	return &v1.GetProfileDataResponse{Profile: &v1.Profile{}}, nil
 }
 
 func (m *MockRepo) Get(_ context.Context, email string) (User, error) {
@@ -50,7 +37,7 @@ func (m *MockRepo) Create(_ context.Context, newUser User) error {
 }
 
 func TestUserOtherError(t *testing.T) {
-	service := NewService(NewMockRepo(), NewMockProfileServiceClient())
+	service := NewService(NewMockRepo())
 	_, err := service.FindUser(context.Background(), "someothererror@email.com")
 
 	if err == nil {
@@ -62,7 +49,7 @@ func TestUserOtherError(t *testing.T) {
 }
 
 func TestUserNotFoundBecauseEmailEmpty(t *testing.T) {
-	service := NewService(NewMockRepo(), NewMockProfileServiceClient())
+	service := NewService(NewMockRepo())
 	_, err := service.FindUser(context.Background(), "")
 
 	if err == nil {

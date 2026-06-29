@@ -6,16 +6,21 @@ import (
 	"log"
 	"net/http"
 
+	profilev1 "github.com/achmudas/identity-api/gen/profile/v1"
+	"github.com/achmudas/identity-api/gen/profile/v1/profilev1connect"
 	httpapierrors "github.com/achmudas/identity-api/internal/httpapi/errors"
 	"github.com/achmudas/identity-api/internal/user"
+	"github.com/go-chi/chi/v5/middleware"
+	"google.golang.org/grpc/metadata"
 )
 
 type Handler struct {
-	userService *user.Service
+	userService   *user.Service
+	profileClient profilev1connect.ProfileServiceClient
 }
 
-func NewHandler(userService *user.Service) *Handler {
-	return &Handler{userService}
+func NewHandler(userService *user.Service, client profilev1connect.ProfileServiceClient) *Handler {
+	return &Handler{userService: userService, profileClient: client}
 }
 
 func (h *Handler) Healthz(w http.ResponseWriter, _ *http.Request) {
@@ -41,7 +46,25 @@ func (h *Handler) FindUser(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusInternalServerError, httpapierrors.APIError{Code: "bad_error", Message: "Something bad happened when searching for user."})
 		return
 	}
-	respondUser(w, http.StatusOK, u)
+
+	dto := user.UserDTO{ID: u.UserID, Email: u.Email, Username: u.Username}
+
+	ctx := metadata.AppendToOutgoingContext(r.Context(), "x-request-id", middleware.GetReqID(r.Context()))
+	resp, err := h.profileClient.GetProfileData(ctx, &profilev1.GetProfileDataRequest{UserId: u.UserID})
+	if err != nil {
+		log.Printf("error when retrieving profile information: %v", err)
+		// #TODO could be extended with the errors from grpc service
+		respondError(w, http.StatusInternalServerError, httpapierrors.APIError{Code: "bad_error", Message: "Failed to retrieve profile information."})
+		return
+	}
+
+	profile := resp.GetProfile()
+	if profile != nil {
+		dto.AvatarLink = profile.AvatarLink
+		dto.Address = profile.Address
+	}
+
+	respondUser(w, http.StatusOK, dto)
 }
 
 func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
