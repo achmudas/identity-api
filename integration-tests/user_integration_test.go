@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"github.com/achmudas/identity-api/internal/logger"
-	"github.com/achmudas/identity-api/internal/store"
 	"github.com/achmudas/identity-api/internal/user"
+	"github.com/achmudas/identity-api/internal/user/store"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/require"

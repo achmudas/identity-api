@@ -1,4 +1,3 @@
-// just main package for testing initial setup
 package main
 
 import (
@@ -16,8 +15,8 @@ import (
 	"github.com/achmudas/identity-api/internal/config"
 	"github.com/achmudas/identity-api/internal/httpapi"
 	"github.com/achmudas/identity-api/internal/logger"
-	"github.com/achmudas/identity-api/internal/store"
 	"github.com/achmudas/identity-api/internal/user"
+	"github.com/achmudas/identity-api/internal/user/store"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
